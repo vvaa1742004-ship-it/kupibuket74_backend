@@ -1,0 +1,8 @@
+.git
+.pycache
+__pycache__
+.venv
+webapp
+node_modules
+dist
+

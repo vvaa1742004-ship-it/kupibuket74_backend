@@ -1,0 +1,11 @@
+.venv/
+.pycache/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.env
+webapp/node_modules/
+webapp/dist/
+alembic/versions/__pycache__/
+*.pyc
