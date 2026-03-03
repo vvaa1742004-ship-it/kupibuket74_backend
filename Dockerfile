@@ -20,5 +20,4 @@ RUN pip install --no-cache-dir .
 RUN chmod +x /app/docker-entrypoint.sh
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["python", "-m", "app.railway"]
-
+CMD ["python", "-m", "app.run_api"]

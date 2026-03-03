@@ -200,32 +200,80 @@ docker compose exec bot python seed.py
 - frontend собирается отдельно и отдается через nginx
 - Mini App ожидает запуск из Telegram; для локальной отладки можно подставить `window.__DEV_INIT_DATA__`
 
-## Railway Backend Deploy
+## Railway Production Deploy
 
-Railway should deploy backend only from the repo root using `Dockerfile.backend`. Do not deploy `webapp/nginx.conf` or use `docker-compose` on Railway.
+Railway должен поднимать backend из корня репозитория. `webapp` на Railway не деплоится.
 
+Создайте два Railway service из одного и того же репозитория:
+
+1. `api`
+2. `bot-worker`
+
+Для обоих:
+
+- Repository: `vvaa1742004-ship-it/kupibuket74_backend`
 - Root Directory: `/`
 - Builder: `Dockerfile`
-- Dockerfile Path: `Dockerfile.backend`
-- Start Command: `python -m app.railway`
+- Dockerfile Path: `Dockerfile`
 
-Minimum environment variables:
+### Service A: API
+
+Start Command:
 
 ```bash
-DATABASE_URL=postgresql+asyncpg://...
-ALEMBIC_DATABASE_URL=postgresql+psycopg://...
-BOT_TOKEN=123456:token
-ADMIN_IDS=826701279
-JWT_SECRET=change-me
-FRONTEND_ORIGIN=https://kupibuket74delweb.vercel.app
-TZ=Europe/Moscow
-REDIS_URL=redis://...   # optional
-RUN_BOT=true
-RUN_MIGRATIONS=true
+sh -c "alembic upgrade head && python -m app.run_api"
 ```
 
-Healthcheck:
+Минимальные переменные окружения:
+
+```bash
+BOT_TOKEN=123456:token
+DATABASE_URL=postgresql+asyncpg://...
+ALEMBIC_DATABASE_URL=postgresql+psycopg://...   # опционально; если не задан, derive из DATABASE_URL
+JWT_SECRET_KEY=replace-with-32-byte-secret-minimum
+FRONTEND_ORIGIN=https://kupibuket74delweb.vercel.app
+ADMIN_IDS=826701279                              # опционально
+TZ=Europe/Moscow
+REDIS_URL=redis://...                            # опционально
+```
+
+Проверка:
 
 ```bash
 curl https://your-railway-domain.up.railway.app/health
+curl https://your-railway-domain.up.railway.app/docs
 ```
+
+Ожидается:
+
+- `/health` -> `{"ok": true}`
+- `/docs` открывается
+
+### Service B: bot-worker
+
+Start Command:
+
+```bash
+python -m app.run_bot
+```
+
+`bot-worker` не должен выполнять Alembic миграции.
+
+Минимальные переменные окружения:
+
+```bash
+BOT_TOKEN=123456:token
+DATABASE_URL=postgresql+asyncpg://...
+ADMIN_IDS=826701279
+ADMIN_CHAT_ID=-1001234567890
+COURIERS_CHAT_ID=-1001234567891
+MINIAPP_URL=https://kupibuket74delweb.vercel.app
+TZ=Europe/Moscow
+REDIS_URL=redis://...   # опционально
+```
+
+Проверка:
+
+- в логах есть `bot started`
+- нет `TelegramConflictError`
+- бот отвечает на `/start`

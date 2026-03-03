@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     database_url: str = Field(alias="DATABASE_URL")
     alembic_database_url: str = Field(default="", alias="ALEMBIC_DATABASE_URL")
     redis_url: str = Field(default="", alias="REDIS_URL")
-    admin_ids_raw: str = Field(alias="ADMIN_IDS")
+    admin_ids_raw: str = Field(default="", alias="ADMIN_IDS")
     fsm_ttl_seconds: int = Field(default=86400, alias="FSM_TTL_SECONDS")
     page_size: int = Field(default=5, alias="PAGE_SIZE")
     require_proof_photo_on_delivery: bool = Field(default=True, alias="REQUIRE_PROOF_PHOTO_ON_DELIVERY")
@@ -32,9 +32,14 @@ class Settings(BaseSettings):
     )
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     jwt_expire_minutes: int = Field(default=1440, alias="JWT_EXPIRE_MINUTES")
-    webapp_base_url: str = Field(default="http://localhost:8080", alias="WEBAPP_BASE_URL")
-    api_cors_origins_raw: str = Field(
+    webapp_base_url: str = Field(
         default="http://localhost:8080",
+        validation_alias=AliasChoices("WEBAPP_BASE_URL", "MINIAPP_URL"),
+    )
+    admin_chat_id: int | None = Field(default=None, alias="ADMIN_CHAT_ID")
+    couriers_chat_id: int | None = Field(default=None, alias="COURIERS_CHAT_ID")
+    api_cors_origins_raw: str = Field(
+        default="",
         validation_alias=AliasChoices("API_CORS_ORIGINS", "FRONTEND_ORIGIN"),
     )
     telegram_initdata_ttl_seconds: int = Field(
@@ -47,7 +52,10 @@ class Settings(BaseSettings):
 
     @cached_property
     def api_cors_origins(self) -> list[str]:
-        return [item.strip() for item in self.api_cors_origins_raw.split(",") if item.strip()]
+        origins = [item.strip() for item in self.api_cors_origins_raw.split(",") if item.strip()]
+        if origins:
+            return origins
+        return ["http://localhost:8080", "http://127.0.0.1:8080"]
 
     @cached_property
     def effective_alembic_database_url(self) -> str:
