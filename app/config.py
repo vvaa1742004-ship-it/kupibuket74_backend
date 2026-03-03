@@ -11,7 +11,7 @@ class Settings(BaseSettings):
 
     bot_token: str = Field(alias="BOT_TOKEN")
     database_url: str = Field(alias="DATABASE_URL")
-    alembic_database_url: str = Field(alias="ALEMBIC_DATABASE_URL")
+    alembic_database_url: str = Field(default="", alias="ALEMBIC_DATABASE_URL")
     redis_url: str = Field(default="", alias="REDIS_URL")
     admin_ids_raw: str = Field(alias="ADMIN_IDS")
     fsm_ttl_seconds: int = Field(default=86400, alias="FSM_TTL_SECONDS")
@@ -48,6 +48,12 @@ class Settings(BaseSettings):
     @cached_property
     def api_cors_origins(self) -> list[str]:
         return [item.strip() for item in self.api_cors_origins_raw.split(",") if item.strip()]
+
+    @cached_property
+    def effective_alembic_database_url(self) -> str:
+        if self.alembic_database_url:
+            return self.alembic_database_url
+        return self.database_url.replace("postgresql+asyncpg://", "postgresql+psycopg://", 1)
 
 
 settings = Settings()
