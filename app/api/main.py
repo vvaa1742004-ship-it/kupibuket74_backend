@@ -10,13 +10,12 @@ from app.api.routes import (
     couriers_router,
     orders_router,
 )
-from app.config import settings
 
 app = FastAPI(title="Flower Courier Mini App API", version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.api_cors_origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
